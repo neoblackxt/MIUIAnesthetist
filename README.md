@@ -1,8 +1,8 @@
 # MIUIAnesthetist
-MIUI麻醉师Xposed模块，麻醉MIUI，以便对MIUI商店等癌组织进行无痛切除
+MIUI麻醉师Xposed模块，麻醉MIUI，以便对小米应用商店等癌组织进行无痛切除
 
 ## 功能
-禁止MIUI系统启动时检查自身完整性，防止在删除MIUI商店后无法开机进入系统。理论上支持其他的开机自检的系统应用，如系统更新等。
+禁止MIUI系统启动时检查自身完整性，防止在删除小米应用商店后无法开机进入系统。理论上支持其他的开机自检的系统应用，如系统更新等。
 
 ## 食用方法
 利用magisk的挂载功能，在`/sbin/.magisk/modules/你的模块名/system/app/MiuiSuperMarket/`下建立一个`.replace`文件占位即可，每次开机自动移除垃圾系统应用。
