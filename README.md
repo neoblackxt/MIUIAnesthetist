@@ -11,7 +11,7 @@ MIUI麻醉师Xposed模块，麻醉MIUI，以便对小米应用商店等癌组织
 ## 食用方法
 安装并启用此Xposed模块，重启系统。
 
-如果需要移除系统应用建议使用release中的Magisk模块，一旦出现异常情况，用mm管理器禁用此magisk模块即可恢复。
+如果需要移除系统应用建议使用release中的[Magisk模块](https://github.com/neoblackxt/MIUIAnesthetist/releases/download/2.0/MIUIAnesthetistHelperMagiskModule.zip)，一旦出现异常情况，用mm管理器禁用此magisk模块即可恢复。
 
 此模块默认只移除MiuiSuperMarket。修改此模块中的`install.sh`文件，将你想要移除的应用的所在目录填写在`REPLACE=""`中，一行一个，格式参照上面几行的例子。
 
