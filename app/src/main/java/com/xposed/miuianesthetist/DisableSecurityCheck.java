@@ -1,8 +1,12 @@
 package com.xposed.miuianesthetist;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
+import android.util.ArrayMap;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
@@ -92,6 +96,40 @@ public class DisableSecurityCheck implements IXposedHookLoadPackage {
                     XposedBridge.log(t);
                 }
             }
+
+
+            /* 危险操作 强行设置应用为未安装状态，持久性修改，每次系统启动时自动生效，但不会拦截手动安装应用操作
+                其操作实质为修改 /data/system/users/0/package-restrictions.xml 中 pkg 元素的 inst="false" */
+            /*try {
+                Class<?> aouClazz = XposedHelpers.findClass("android.miui.AppOpsUtils", lpparam.classLoader);
+                Object isXOptMode = XposedHelpers.findMethodExact(aouClazz, "isXOptMode").invoke(null);
+                XposedBridge.log("miuianesthetist debug: isOptMode " + (boolean) isXOptMode);
+                Class<?> psClazz = XposedHelpers.findClass("com.android.server.pm.PackageSetting", lpparam.classLoader);
+                Class<?> pmsClazz = XposedHelpers.findClass("com.android.server.pm.PackageManagerService", lpparam.classLoader);
+                Class<?> sClazz = XposedHelpers.findClass("com.android.server.pm.Settings", lpparam.classLoader);
+
+                findAndHookMethod("com.android.server.pm.PackageManagerServiceInjector"
+                        , lpparam.classLoader, "checkPackageInstallerStatus", pmsClazz, sClazz, new XC_MethodHook() {
+
+                            @TargetApi(Build.VERSION_CODES.KITKAT)
+                            @Override
+                            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                                try {
+                                    XposedBridge.log("miuianesthetist debug: checkPackageInstallerStatus after hook");
+                                    ArrayMap mPackages = (ArrayMap) XposedHelpers.findField(sClazz, "mPackages").get(param.args[1]);
+                                    Object miuiInstaller = psClazz.cast(mPackages.get("com.xiaomi.market"));
+                                    XposedHelpers.findMethodBestMatch(psClazz, "setInstalled", boolean.class, int.class).invoke(miuiInstaller, false, 0);
+                                } catch (Throwable t) {
+                                    XposedBridge.log("miuianesthetist err:");
+                                    XposedBridge.log(t);
+                                }
+
+                            }
+                        });
+            } catch (Throwable t) {
+                XposedBridge.log("miuianesthetist err:");
+                XposedBridge.log(t);
+            }*/
 
         }
     }
