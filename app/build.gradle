@@ -20,8 +20,8 @@ android {
         applicationId 'com.xposed.miuianesthetist'
         minSdkVersion 14
         targetSdkVersion 28
-        versionCode 3
-        versionName '2.1'
+        versionCode 4
+        versionName '3.0'
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         manifestPlaceholders = [:]
         signingConfig signingConfigs.release
