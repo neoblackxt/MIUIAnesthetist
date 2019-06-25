@@ -46,7 +46,7 @@ If you want to remove system apps, I suggest you use [Magisk module](https://git
 so that if something goes wrong, use [mm](https://github.com/Magisk-Modules-Repo/mm) disable this Magisk module, then all removed apps will come back again. 
 
 Modify `install.sh` file in this Magisk module: add the directories path which app you want to remove locate in to `REPLACE=""`, one path per line, there is a good example on a couple of lines above.
-This Magisk module only remove MiuiSuperMarket by default, it's useless to global edition MIUI user, remove that line.
+This Magisk module only remove MiuiSuperMarket by default, it's useless to MIUI global edition user, remove that line.
 
 Learn more: [Magisk guides](https://topjohnwu.github.io/Magisk/guides.html)
 
