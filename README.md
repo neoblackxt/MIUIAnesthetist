@@ -1,7 +1,7 @@
 # MIUIAnesthetist
 MIUI麻醉师Xposed模块，麻醉MIUI，以便对小米应用商店等癌组织进行无痛切除
 
-[for English user](#MIUIAnesthetist_EN)
+[For English users](#MIUIAnesthetist_EN)
 
 ## 功能特性
 禁止MIUI系统启动时检查自身完整性，防止在删除小米应用商店后无法开机进入系统。理论上支持其他的开机自检的系统应用，如系统更新等。
@@ -30,7 +30,7 @@ MIUI麻醉师Xposed模块，麻醉MIUI，以便对小米应用商店等癌组织
 如果因删除小米应用商店而无法开机，将[小米应用商店](http://apkpure.co/xiaomi-market-com-xiaomi-market/)文件放到`/data/app/xiaomimarket/xiaomimarket.apk`,或者刷机（不必清除`/data`分区）。
 
 # MIUIAnesthetist_EN
-Cut out those cancer apps on MIUI painlessly with this help of this Xposed module.
+Cut out those cancer apps on MIUI painlessly with the help of this Xposed module.
 
 ## FEATURE
 Disable MIUI integrity check when boot to prevent boot-loop, so that you can safely force delete System Updater and other system apps.
