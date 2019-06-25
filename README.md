@@ -39,7 +39,7 @@ Remove limit for disabling some packages, prevent some package auto re-enable wh
 
 Prevent MI Market from hijacking Google Play on MIUI China ROMs.
 
-## HOW TO USE
+## USAGE
 Install and enable this Xposed module then reboot.
 
 If you want to remove system apps, I suggest you use [Magisk module](https://github.com/neoblackxt/MIUIAnesthetist/releases/download/v2.0/MIUIAnesthetistHelperMagiskModule.zip) in release to remove them systemless-ly, 
