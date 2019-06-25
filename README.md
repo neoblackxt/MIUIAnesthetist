@@ -1,5 +1,6 @@
 # MIUIAnesthetist
 MIUI麻醉师Xposed模块，麻醉MIUI，以便对小米应用商店等癌组织进行无痛切除
+
 [for English user](#MIUIAnesthetist_EN)
 
 ## 功能特性
@@ -47,7 +48,7 @@ so that if something goes wrong, use [mm](https://github.com/Magisk-Modules-Repo
 Modify `install.sh` file in this Magisk module: add the directories path which app your want to remove locate in to `REPLACE=""`, one directory per line, there is a good example on a couple of lines above.
 This Magisk module only remove MiuiSuperMarket by default, it's useless to global edition MIUI user.
 
-Lean more: [Magisk guides](https://topjohnwu.github.io/Magisk/guides.html)
+Learn more: [Magisk guides](https://topjohnwu.github.io/Magisk/guides.html)
 
 ## NOTICE
 If this module disabled by accident, its magic will disappear and then your phone will boot-loop. So remember to reverse your operation on system apks before you disable this module.
