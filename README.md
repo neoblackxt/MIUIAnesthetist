@@ -45,7 +45,7 @@ Install and enable this Xposed module then reboot.
 If you want to remove system apps, I suggest you use [Magisk module](https://github.com/neoblackxt/MIUIAnesthetist/releases/download/v2.0/MIUIAnesthetistHelperMagiskModule.zip) in release to remove them systemless-ly, 
 so that if something goes wrong, use [mm](https://github.com/Magisk-Modules-Repo/mm) disable this Magisk module, then all removed apps will come back again. 
 
-Modify `install.sh` file in this Magisk module: add the directories path which app your want to remove locate in to `REPLACE=""`, one directory per line, there is a good example on a couple of lines above.
+Modify `install.sh` file in this Magisk module: add the directories path which app you want to remove locate in to `REPLACE=""`, one path per line, there is a good example on a couple of lines above.
 This Magisk module only remove MiuiSuperMarket by default, it's useless to global edition MIUI user.
 
 Learn more: [Magisk guides](https://topjohnwu.github.io/Magisk/guides.html)
