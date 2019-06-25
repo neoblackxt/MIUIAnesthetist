@@ -35,7 +35,7 @@ Cut out those cancer apps on MIUI painlessly with the help of this Xposed module
 ## FEATURE
 Disable MIUI integrity check when boot to prevent boot-loop, so that you can safely force delete System Updater and other system apps.
 
-Remove limit for disabling some packages, prevent some package auto re-enable when boot.
+Remove limit for disabling some packages and prevent some package auto re-enable when boot.
 
 Prevent MI Market from hijacking Google Play on MIUI China ROMs.
 
@@ -46,7 +46,7 @@ If you want to remove system apps, I suggest you use [Magisk module](https://git
 so that if something goes wrong, use [mm](https://github.com/Magisk-Modules-Repo/mm) disable this Magisk module, then all removed apps will come back again. 
 
 Modify `install.sh` file in this Magisk module: add the directories path which app you want to remove locate in to `REPLACE=""`, one path per line, there is a good example on a couple of lines above.
-This Magisk module only remove MiuiSuperMarket by default, it's useless to global edition MIUI user.
+This Magisk module only remove MiuiSuperMarket by default, it's useless to global edition MIUI user, remove that line.
 
 Learn more: [Magisk guides](https://topjohnwu.github.io/Magisk/guides.html)
 
