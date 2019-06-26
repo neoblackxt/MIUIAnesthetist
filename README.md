@@ -42,6 +42,8 @@ Prevent MI Market from hijacking Google Play on MIUI China ROMs.
 ## USAGE
 Install and enable this Xposed module then reboot.
 
+Freely disable the packages which you don't need.
+
 If you want to remove system apps, I suggest you use [Magisk module](https://github.com/neoblackxt/MIUIAnesthetist/releases/download/v2.0/MIUIAnesthetistHelperMagiskModule.zip) in release to remove them systemless-ly, 
 so that if something goes wrong, use [mm](https://github.com/Magisk-Modules-Repo/mm) disable this Magisk module, then all removed apps will come back again. 
 
