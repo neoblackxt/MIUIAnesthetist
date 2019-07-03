@@ -27,7 +27,7 @@ MIUI麻醉师Xposed模块，麻醉MIUI，以便对小米应用商店等癌组织
 ## 救援
 如果因冻结系统应用而无法开机，只能删除`/data/system/users/0/package-restrictions.xml`文件后重启系统。可以在TWRP recovery的 高级->文件管理器 中操作。或在recovery终端中执行命令`rm /data/system/users/0/package-restrictions.xml`。或者用电脑连接recovery模式中的手机，在`cmd`中执行`adb shell`，然后`rm /data/system/users/0/package-restrictions.xml`。刷机不会有任何帮助，擦除`/data`分区是可行的但没必要，因为那样会丢失除了`/sdcard`之外的所有数据。
 
-如果因删除小米应用商店而无法开机，将[小米应用商店](http://apkpure.co/xiaomi-market-com-xiaomi-market/)文件放到`/data/app/xiaomimarket/xiaomimarket.apk`,或者刷机（不必清除`/data`分区）。
+如果因删除小米应用商店而无法开机，将[小米应用商店](http://apkpure.co/xiaomi-market-com-xiaomi-market/)文件放到`/data/app/xiaomimarket/xiaomimarket.apk`,或者刷机（**不必**清除`/data`分区）。
 
 # <a id="EN"></a>MIUI Anesthetist
 Cut out those cancer apps on MIUI painlessly with the help of this Xposed module.
@@ -56,7 +56,7 @@ Learn more: [Magisk guides](https://topjohnwu.github.io/Magisk/guides.html#remov
 If this module disabled by accident, its magic will disappear and then your phone will boot-loop. So remember to reverse your operation on system apks before you disable this module.
 
 ## RESCUE
-Flash ROM (NOT need to wipe /data) if you have really removed some system apps files from ROM.
+Flash ROM (**NOT** need to wipe /data) if you have really removed some system apps files from ROM.
 
 Remove `/data/system/users/0/package-restrictions.xml` file if you just disabled some system apps.
 
