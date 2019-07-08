@@ -4,9 +4,12 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.os.Bundle;
 import android.util.ArrayMap;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
@@ -18,26 +21,28 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 import static de.robv.android.xposed.XposedHelpers.findAndHookConstructor;
 import static de.robv.android.xposed.XposedHelpers.findAndHookMethod;
-
+import static de.robv.android.xposed.XposedHelpers.findConstructorExact;
 
 public class DisableSecurityCheck implements IXposedHookLoadPackage {
 
     private static Boolean iib = null;
+    private static int count = 0;
+
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam)  {
         if (lpparam.packageName.equals("android")) {
 
-            /* 禁用开机检查自身完整性 services.jar */
+            /* Disable integrity check when boot in services.jar */
             try {
                 Class sms = XposedHelpers.findClass("com.miui.server.SecurityManagerService"
                         , lpparam.classLoader);
                 findAndHookConstructor(sms, Context.class, boolean.class/*onlyCore*/, new XC_MethodHook() {
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        // 设置SecurityManagerService类为onlyCore模式，即不做checkSystemSelfProtection()检测
+                        // Set the instance of SecurityManagerService class to be onlyCore mode, then checkSystemSelfProtection() method will do nothing
                         param.args[1] = true;
-                        // 设置系统应用是否被破解的标识为未被破解
+                        // Set system apps' states to be not cracked
                         XposedHelpers.findField(sms, "mSysAppCracked").setInt(param.thisObject, 0);
                     }
                 });
@@ -47,7 +52,7 @@ public class DisableSecurityCheck implements IXposedHookLoadPackage {
             }
 
 
-            /* 禁用检查应用是否可以被禁用 services.jar */
+            /* Remove the limit for disabling system apps in services.jar */
             try {
                 findAndHookMethod("com.android.server.pm.PackageManagerServiceInjector"
                         , lpparam.classLoader, "isAllowedDisable",
@@ -57,19 +62,22 @@ public class DisableSecurityCheck implements IXposedHookLoadPackage {
                 XposedBridge.log(t);
             }
 
-            // 获取国际版标识
+            // check if MIUI is global version
             if (null == iib) {
-                iib = XposedHelpers.findField(XposedHelpers.findClass(
-                        "miui.os.Build", lpparam.classLoader),
-                        "IS_INTERNATIONAL_BUILD").getBoolean(null);
+                try {
+                    iib = XposedHelpers.findField(XposedHelpers.findClass(
+                            "miui.os.Build", lpparam.classLoader),
+                            "IS_INTERNATIONAL_BUILD").getBoolean(null);
+                } catch (Throwable t) {
+                    XposedBridge.log("miuianesthetist err:");
+                    XposedBridge.log(t);
+                }
             }
 
-            /* 在intent被MIUI处理之前直接原样返回，避免http/https协议被劫持到小米浏览器，
-            同时避免market/http/https协议的应用商店链接被劫持 services.jar */
+            /* Return an intent before it get proceeded to avoid being hijacked in services.jar */
             antiHijack:
             {
                 if (iib) {
-                    //是国际版则无需处理
                     break antiHijack;
                 }
                 try {
@@ -83,11 +91,9 @@ public class DisableSecurityCheck implements IXposedHookLoadPackage {
                                     if (("market".equals(intent.getScheme()) && "android.intent.action.VIEW".equals(intent.getAction())) ||
                                             ("http".equals(intent.getScheme()) || "https".equals(intent.getScheme())) &&
                                                     "android.intent.action.VIEW".equals(intent.getAction())) {
-                                        XposedBridge.log("miuianesthetist debug: checkMiuiIntent return original result");
                                         //返回第一个参数pms的mResolveInfo属性
                                         return XposedHelpers.findField(pmsClazz, "mResolveInfo").get(param.args[0]);
                                     }
-                                    XposedBridge.log("miuianesthetist debug: checkMiuiIntent return injected result");
                                     return XposedBridge.invokeOriginalMethod(param.method, param.thisObject, param.args);
                                 }
                             });
@@ -98,8 +104,9 @@ public class DisableSecurityCheck implements IXposedHookLoadPackage {
             }
 
 
-            /* 危险操作 强行设置应用为未安装状态，持久性修改，每次系统启动时自动生效，但不会拦截手动安装应用操作
-                其操作实质为修改 /data/system/users/0/package-restrictions.xml 中 pkg 元素的 inst="false" */
+            
+
+            /* Dangerous ops: force set a app to be not installed forever, it modify "pkg" element's inst="false" in /data/system/users/0/package-restrictions.xml */
             /*try {
                 Class<?> aouClazz = XposedHelpers.findClass("android.miui.AppOpsUtils", lpparam.classLoader);
                 Object isXOptMode = XposedHelpers.findMethodExact(aouClazz, "isXOptMode").invoke(null);
@@ -132,5 +139,58 @@ public class DisableSecurityCheck implements IXposedHookLoadPackage {
             }*/
 
         }
+
+
+        //SecurityCenter.apk
+        if (lpparam.packageName.equals("com.miui.securitycenter")) {
+            /* Allow user disable system apps WLan network access permission */
+            try {
+                Class<?> ada = XposedHelpers.findClass("com.miui.appmanager.ApplicationsDetailsActivity", lpparam.classLoader);
+                Method[] declaredMethods = ada.getDeclaredMethods();
+                for (Method m : declaredMethods) {
+                    XposedBridge.hookMethod(m, new XC_MethodHook() {
+                        @Override
+                        protected void beforeHookedMethod(MethodHookParam param)  {
+                            try {
+                                if(param.thisObject!=null)
+                                XposedHelpers.setBooleanField(param.thisObject,"mIsSystem",false);
+                            } catch (Throwable t) {
+                                XposedBridge.log("miuianesthetist err:");
+                                XposedBridge.log(t);
+                            }
+                        }
+                    });
+                }
+
+            } catch (Throwable t) {
+                XposedBridge.log("miuianesthetist err:");
+                XposedBridge.log(t);
+            }
+
+            /* Allow user set third-party launcher to be default */
+            try {
+                XposedHelpers.findAndHookMethod("com.miui.securitycenter.provider.ThirdDesktopProvider", lpparam.classLoader,"call",String.class,String.class,Bundle.class, new XC_MethodHook() {
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param)  {
+                        try {
+                            Bundle result = (Bundle)param.getResult();
+                            //mode=0 can't use unauthorized third-party launcher; mode=1 can't use official launcher; other value no limit
+                            result.putInt("mode",-1);
+                            param.setResult(result);
+                        } catch (Throwable t) {
+                            XposedBridge.log("miuianesthetist err:");
+                            XposedBridge.log(t);
+                        }
+                    }
+                });
+            }catch (Throwable t) {
+                XposedBridge.log("miuianesthetist err:");
+                XposedBridge.log(t);
+            }
+
+
+        }
+
+
     }
 }
