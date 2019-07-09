@@ -2,7 +2,10 @@ package com.xposed.miuianesthetist;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -10,12 +13,16 @@ import java.util.List;
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XC_MethodReplacement;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
+import static de.robv.android.xposed.XposedBridge.hookMethod;
+import static de.robv.android.xposed.XposedBridge.invokeOriginalMethod;
+import static de.robv.android.xposed.XposedBridge.log;
 import static de.robv.android.xposed.XposedHelpers.findAndHookConstructor;
 import static de.robv.android.xposed.XposedHelpers.findAndHookMethod;
+import static de.robv.android.xposed.XposedHelpers.findClass;
+import static de.robv.android.xposed.XposedHelpers.findField;
+import static de.robv.android.xposed.XposedHelpers.setBooleanField;
 
 public class DisableSecurityCheck implements IXposedHookLoadPackage {
 
@@ -27,7 +34,7 @@ public class DisableSecurityCheck implements IXposedHookLoadPackage {
 
             /* Disable integrity check when boot in services.jar */
             try {
-                Class sms = XposedHelpers.findClass("com.miui.server.SecurityManagerService"
+                Class sms = findClass("com.miui.server.SecurityManagerService"
                         , lpparam.classLoader);
                 findAndHookConstructor(sms, Context.class, boolean.class/*onlyCore*/, new XC_MethodHook() {
                     @Override
@@ -35,12 +42,12 @@ public class DisableSecurityCheck implements IXposedHookLoadPackage {
                         // Set the instance of SecurityManagerService class to be onlyCore mode, then checkSystemSelfProtection() method will do nothing
                         param.args[1] = true;
                         // Set system apps' states to be not cracked
-                        XposedHelpers.findField(sms, "mSysAppCracked").setInt(param.thisObject, 0);
+                        findField(sms, "mSysAppCracked").setInt(param.thisObject, 0);
                     }
                 });
             } catch (Throwable t) {
-                XposedBridge.log("miuianesthetist err:");
-                XposedBridge.log(t);
+                log("miuianesthetist err:");
+                log(t);
             }
 
 
@@ -50,30 +57,55 @@ public class DisableSecurityCheck implements IXposedHookLoadPackage {
                         , lpparam.classLoader, "isAllowedDisable",
                         String.class, int.class, XC_MethodReplacement.returnConstant(true));
             } catch (Throwable t) {
-                XposedBridge.log("miuianesthetist err:");
-                XposedBridge.log(t);
+                log("miuianesthetist err:");
+                log(t);
             }
 
-            // check if MIUI is global version
+             /* Prevent some ultra sticky system apps (MiuiDaemon, FindDevice, etc.) from running after have been disabled in services.jar */
+            try{
+                findAndHookMethod("com.android.server.am.ActivityManagerServiceInjector", lpparam.classLoader, "shouldAddPersistApp", ApplicationInfo.class,new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) throws IllegalAccessException {
+                        ApplicationInfo info = (ApplicationInfo)param.args[0];
+                        Object GREEN_KID_AGENT_PKG_NAME = findField(findClass("com.miui.server.GreenGuardManagerService", lpparam.classLoader), "GREEN_KID_AGENT_PKG_NAME").get(null);
+                        if (!TextUtils.equals(info.packageName, (CharSequence) GREEN_KID_AGENT_PKG_NAME) && info.enabled) {
+                            param.setResult(true);
+                            return;
+                        }
+                        String str = "yManagerServiceInjector";//Shorten TAG ActivityManagerServiceInjector
+                        String sb = "persist app : " +
+                                info.packageName +
+                                "should not add to start";
+                        Log.d(str, sb);
+                        param.setResult(false);
+                    }
+
+                });
+            }catch (Throwable t) {
+                log("miuianesthetist err:");
+                log(t);
+            }
+
+            // Check if MIUI is global version
             if (null == iib) {
                 try {
-                    iib = XposedHelpers.findField(XposedHelpers.findClass(
+                    iib = findField(findClass(
                             "miui.os.Build", lpparam.classLoader),
                             "IS_INTERNATIONAL_BUILD").getBoolean(null);
                 } catch (Throwable t) {
-                    XposedBridge.log("miuianesthetist err:");
-                    XposedBridge.log(t);
+                    log("miuianesthetist err:");
+                    log(t);
                 }
             }
 
-            /* Return an intent before it get proceeded to avoid being hijacked in services.jar */
+            /* Return an intent before it get processed to avoid being hijacked in services.jar */
             antiHijack:
             {
                 if (iib) {
                     break antiHijack;
                 }
                 try {
-                    Class<?> pmsClazz = XposedHelpers.findClass("com.android.server.pm.PackageManagerService", lpparam.classLoader);
+                    Class<?> pmsClazz = findClass("com.android.server.pm.PackageManagerService", lpparam.classLoader);
                     findAndHookMethod("com.android.server.pm.PackageManagerServiceInjector"
                             , lpparam.classLoader, "checkMiuiIntent",
                             pmsClazz, Intent.class, String.class, int.class, List.class, int.class, new XC_MethodReplacement() {
@@ -83,15 +115,15 @@ public class DisableSecurityCheck implements IXposedHookLoadPackage {
                                     if (("market".equals(intent.getScheme()) && "android.intent.action.VIEW".equals(intent.getAction())) ||
                                             ("http".equals(intent.getScheme()) || "https".equals(intent.getScheme())) &&
                                                     "android.intent.action.VIEW".equals(intent.getAction())) {
-                                        //返回第一个参数pms的mResolveInfo属性
-                                        return XposedHelpers.findField(pmsClazz, "mResolveInfo").get(param.args[0]);
+                                        //return mResolveInfo of the first arg pms
+                                        return findField(pmsClazz, "mResolveInfo").get(param.args[0]);
                                     }
-                                    return XposedBridge.invokeOriginalMethod(param.method, param.thisObject, param.args);
+                                    return invokeOriginalMethod(param.method, param.thisObject, param.args);
                                 }
                             });
                 } catch (Throwable t) {
-                    XposedBridge.log("miuianesthetist err:");
-                    XposedBridge.log(t);
+                    log("miuianesthetist err:");
+                    log(t);
                 }
             }
         }
@@ -100,31 +132,31 @@ public class DisableSecurityCheck implements IXposedHookLoadPackage {
         if (lpparam.packageName.equals("com.miui.securitycenter")) {
             /* Allow user disable system apps WLan network access permission */
             try {
-                Class<?> ada = XposedHelpers.findClass("com.miui.appmanager.ApplicationsDetailsActivity", lpparam.classLoader);
+                Class<?> ada = findClass("com.miui.appmanager.ApplicationsDetailsActivity", lpparam.classLoader);
                 Method[] declaredMethods = ada.getDeclaredMethods();
                 for (Method m : declaredMethods) {
-                    XposedBridge.hookMethod(m, new XC_MethodHook() {
+                    hookMethod(m, new XC_MethodHook() {
                         @Override
                         protected void beforeHookedMethod(MethodHookParam param) {
                             try {
                                 if (param.thisObject != null)
-                                    XposedHelpers.setBooleanField(param.thisObject, "mIsSystem", false);
+                                    setBooleanField(param.thisObject, "mIsSystem", false);
                             } catch (Throwable t) {
-                                XposedBridge.log("miuianesthetist err:");
-                                XposedBridge.log(t);
+                                log("miuianesthetist err:");
+                                log(t);
                             }
                         }
                     });
                 }
 
             } catch (Throwable t) {
-                XposedBridge.log("miuianesthetist err:");
-                XposedBridge.log(t);
+                log("miuianesthetist err:");
+                log(t);
             }
 
             /* Allow user set third-party launcher to be default */
             try {
-                XposedHelpers.findAndHookMethod("com.miui.securitycenter.provider.ThirdDesktopProvider", lpparam.classLoader, "call", String.class, String.class, Bundle.class, new XC_MethodHook() {
+                findAndHookMethod("com.miui.securitycenter.provider.ThirdDesktopProvider", lpparam.classLoader, "call", String.class, String.class, Bundle.class, new XC_MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) {
                         try {
@@ -135,14 +167,14 @@ public class DisableSecurityCheck implements IXposedHookLoadPackage {
                                 param.setResult(result);
                             }
                         } catch (Throwable t) {
-                            XposedBridge.log("miuianesthetist err:");
-                            XposedBridge.log(t);
+                            log("miuianesthetist err:");
+                            log(t);
                         }
                     }
                 });
             } catch (Throwable t) {
-                XposedBridge.log("miuianesthetist err:");
-                XposedBridge.log(t);
+                log("miuianesthetist err:");
+                log(t);
             }
         }
     }
