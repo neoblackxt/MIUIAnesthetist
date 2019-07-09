@@ -8,11 +8,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.FrameLayout;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.List;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
@@ -20,14 +16,12 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XC_MethodReplacement;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
-import static de.robv.android.xposed.XposedBridge.hookMethod;
 import static de.robv.android.xposed.XposedBridge.invokeOriginalMethod;
 import static de.robv.android.xposed.XposedBridge.log;
 import static de.robv.android.xposed.XposedHelpers.findAndHookConstructor;
 import static de.robv.android.xposed.XposedHelpers.findAndHookMethod;
 import static de.robv.android.xposed.XposedHelpers.findClass;
 import static de.robv.android.xposed.XposedHelpers.findField;
-import static de.robv.android.xposed.XposedHelpers.setBooleanField;
 
 public class DisableSecurityCheck implements IXposedHookLoadPackage {
 
@@ -113,11 +107,7 @@ public class DisableSecurityCheck implements IXposedHookLoadPackage {
             }
 
             // Return an intent before it get processed to avoid being hijacked in services.jar
-            antiHijack:
-            {
-                if (iib) {
-                    break antiHijack;
-                }
+            if (!iib) {
                 try {
                     Class<?> pmsClazz = findClass("com.android.server.pm.PackageManagerService",
                             lpparam.classLoader);
@@ -146,17 +136,18 @@ public class DisableSecurityCheck implements IXposedHookLoadPackage {
             }
         }
 
+
         //SecurityCenter.apk
         if (lpparam.packageName.equals("com.miui.securitycenter")) {
 
             // Allow users disable system apps using SecurityCenter
-            // TODO abstract this three method
+            // TODO abstract these three methods
             try {
                 Class<?> ada = findClass("com.miui.appmanager.ApplicationsDetailsActivity",
                         lpparam.classLoader);
                 findAndHookMethod(ada, "onCreateOptionsMenu", Menu.class, new XC_MethodHook() {
                     @Override
-                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    protected void afterHookedMethod(MethodHookParam param) {
                         try {
                             menu2 = ((Menu) param.args[0]).getItem(1);
                             menu2.setEnabled(true);
@@ -169,7 +160,7 @@ public class DisableSecurityCheck implements IXposedHookLoadPackage {
 
                 findAndHookMethod(ada, "onPrepareOptionsMenu", Menu.class, new XC_MethodHook() {
                     @Override
-                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    protected void afterHookedMethod(MethodHookParam param) {
                         try {
                             if (menu2 != null)
                                 menu2.setEnabled(true);
@@ -182,7 +173,7 @@ public class DisableSecurityCheck implements IXposedHookLoadPackage {
 
                 findAndHookMethod(ada, "onResume", new XC_MethodHook() {
                     @Override
-                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    protected void afterHookedMethod(MethodHookParam param) {
                         try {
                             if (menu2 != null)
                                 menu2.setEnabled(true);
