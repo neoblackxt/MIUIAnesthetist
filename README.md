@@ -10,7 +10,11 @@ MIUI麻醉师Xposed模块，麻醉MIUI，以便对小米应用商店等癌组织
 
 禁止MIUI系统将小米应用商店自动设置为默认应用商店劫持Google Play应用商店。~~（其实就是去你大爷的小米应用商店）~~ 如无效请恢复默认应用设置： 安全中心->应用管理->右上竖排三点->默认应用设置->恢复默认 鸣谢：跟悟空扯关系@酷安网coolapk.com [去除MIUI强制调用小米应用商店（非改build）](https://www.coolapk.com/feed/8492730?shareKey=MjM2ODkyMTI5Zjg4NWNlZDJhMzI~)、ccat3z@github 我不要小米应用市场
 
-## 食用方法
+解除MIUI系统对于未认证的第三方桌面的限制。鸣谢：tianma8023@github [糙米](https://github.com/neoblackxt/FuckMiui)
+
+开启安全中心-应用管理的停用系统应用的功能。
+
+## 使用方法
 安装并启用此Xposed模块，重启系统。
 
 用任何你喜欢的工具/方式冻结你需要冻结的应用。
@@ -23,6 +27,8 @@ MIUI麻醉师Xposed模块，麻醉MIUI，以便对小米应用商店等癌组织
 
 ## 注意事项
 禁用此Xposed模块 或 禁用Xposed框架 或 禁用Xposed框架依附的magisk 或 重新安装/版本升级此模块后，xposed installer没检测到此模块更新（此时可能需手动关闭再打开才能再次启用），都会导致此模块功能失效。所以如果你没有使用Magisk而是直接删掉了`/system/app/MiuiSuperMarket/MiuiSuperMarket.apk`，并且万一因误操作致使此模块被禁用，手机会无法开机进入系统。
+
+有一些系统应用是安卓的核心程序，这些应用是绝对不可以被冻结或者删除的。如果你不了解某个应用，你应该先百度一下，三思而后行。
 
 ## 救援
 如果因冻结系统应用而无法开机，只能删除`/data/system/users/0/package-restrictions.xml`文件后重启系统。可以在TWRP recovery的 高级->文件管理器 中操作。或在recovery终端中执行命令`rm /data/system/users/0/package-restrictions.xml`。或者用电脑连接recovery模式中的手机，在`cmd`中执行`adb shell`，然后`rm /data/system/users/0/package-restrictions.xml`。刷机不会有任何帮助，擦除`/data`分区是可行的但没必要，因为那样会丢失除了`/sdcard`之外的所有数据。
@@ -39,6 +45,10 @@ Remove limit for disabling some packages and prevent some package auto re-enable
 
 Prevent MI Market from hijacking Google Play on MIUI China ROMs.
 
+Remove limit for third-party launcher on MIUI China ROMs.Thanks to tianma8023@github [FuckMiui](https://github.com/neoblackxt/FuckMiui)
+
+Allow users to use Security - Manage apps to disable system apps.
+
 ## USAGE
 Install and enable this Xposed module then reboot.
 
@@ -54,6 +64,8 @@ Learn more: [Magisk guides](https://topjohnwu.github.io/Magisk/guides.html#remov
 
 ## NOTICE
 If this module disabled by accident, its magic will disappear and then your phone will boot-loop. So remember to reverse your operation on system apks before you disable this module.
+
+Some system apps are Android core programs, they should never be disabled or removed. If you have no idea about a system app, you should Google it first. 
 
 ## RESCUE
 Flash ROM (**NOT** need to wipe /data) if you have really removed some system apps files from ROM.
