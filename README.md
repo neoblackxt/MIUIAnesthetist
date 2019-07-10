@@ -8,9 +8,9 @@ MIUI麻醉师Xposed模块，麻醉MIUI，以便对小米应用商店等癌组织
 
 解除MIUI系统部分系统应用、组件不能被冻结的限制，并且避免被冻结的应用在重启后自动解冻。（全球上网必须在MConnService(VsimCore.apk)冻结之后才能成功冻结）
 
-禁止MIUI系统将小米应用商店自动设置为默认应用商店劫持Google Play应用商店。~~（其实就是去你大爷的小米应用商店）~~ 如无效请恢复默认应用设置： 安全中心->应用管理->右上竖排三点->默认应用设置->恢复默认 鸣谢：跟悟空扯关系@酷安网coolapk.com [去除MIUI强制调用小米应用商店（非改build）](https://www.coolapk.com/feed/8492730?shareKey=MjM2ODkyMTI5Zjg4NWNlZDJhMzI~)、ccat3z@github 我不要小米应用市场
+禁止MIUI系统将小米应用商店自动设置为默认应用商店劫持Google Play应用商店。~~（其实就是去你大爷的小米应用商店）~~ 如无效请恢复默认应用设置： 安全中心->应用管理->右上竖排三点->默认应用设置->恢复默认 感谢：跟悟空扯关系@酷安网coolapk.com [去除MIUI强制调用小米应用商店（非改build）](https://www.coolapk.com/feed/8492730?shareKey=MjM2ODkyMTI5Zjg4NWNlZDJhMzI~)、ccat3z@github 我不要小米应用市场
 
-解除MIUI系统对于未认证的第三方桌面的限制。鸣谢：tianma8023@github [糙米](https://github.com/neoblackxt/FuckMiui)
+解除MIUI系统对于未认证的第三方桌面的限制。感谢：tianma8023@github [糙米](https://github.com/neoblackxt/FuckMiui)
 
 开启安全中心-应用管理的停用系统应用的功能。
 
@@ -45,7 +45,7 @@ Remove limit for disabling some packages and prevent some package auto re-enable
 
 Prevent MI Market from hijacking Google Play on MIUI China ROMs.
 
-Remove limit for third-party launcher on MIUI China ROMs.Thanks to tianma8023@github [FuckMiui](https://github.com/neoblackxt/FuckMiui)
+Remove limit for third-party launcher on MIUI China ROMs. Thanks to tianma8023@github [FuckMiui](https://github.com/neoblackxt/FuckMiui)
 
 Allow users to use Security - Manage apps to disable system apps.
 
