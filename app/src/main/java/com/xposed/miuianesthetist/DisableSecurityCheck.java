@@ -1,14 +1,18 @@
 package com.xposed.miuianesthetist;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
+import java.lang.reflect.Field;
 import java.util.List;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
@@ -26,6 +30,7 @@ import static de.robv.android.xposed.XposedHelpers.findField;
 public class DisableSecurityCheck implements IXposedHookLoadPackage {
 
     private static Boolean iib = null;
+    private static volatile Resources res = null;
     private static volatile MenuItem menu2 = null;
 
     @Override
@@ -140,7 +145,7 @@ public class DisableSecurityCheck implements IXposedHookLoadPackage {
         //SecurityCenter.apk
         if (lpparam.packageName.equals("com.miui.securitycenter")) {
 
-            // Allow users disable system apps using SecurityCenter
+            // Allow users to disable system apps using SecurityCenter's manage apps function
             // TODO abstract these three methods
             try {
                 Class<?> ada = findClass("com.miui.appmanager.ApplicationsDetailsActivity",
@@ -149,6 +154,7 @@ public class DisableSecurityCheck implements IXposedHookLoadPackage {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) {
                         try {
+                            //Index: 0 force stop; 1 uninstall/disable/enable; 2 clear data/cache
                             menu2 = ((Menu) param.args[0]).getItem(1);
                             menu2.setEnabled(true);
                         } catch (Throwable t) {
@@ -188,7 +194,44 @@ public class DisableSecurityCheck implements IXposedHookLoadPackage {
                 log(t);
             }
 
-            // Allow users set third-party launcher to be default
+            //Allow users to revoke system app internet access permission
+            //FIXME network control state preview abnormal, title disappear or turn off data, invalid after reboot
+            try{
+                Class<?> ada = findClass("com.miui.appmanager.ApplicationsDetailsActivity",
+                        lpparam.classLoader);
+                findAndHookMethod(ada, "initData", new XC_MethodHook() {
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) {
+                        try {
+                            initRes(param);
+                            int R_id_am_detail_net = res.getIdentifier("am_detail_net","id","com.miui.securitycenter");
+                            View am_detail_net = ((Activity) param.thisObject).findViewById(R_id_am_detail_net);
+                            am_detail_net.setVisibility(View.VISIBLE);
+                        } catch (Throwable t) {
+                            log("miuianesthetist err:");
+                            log(t);
+                        }
+                    }
+                });
+
+                findAndHookMethod(ada, "onClick", View.class, new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) {
+                        try {
+                            Field mIsSystem = findField(ada, "mIsSystem");
+                            mIsSystem.setBoolean(param.thisObject,false);
+                        } catch (Throwable t) {
+                            log("miuianesthetist err:");
+                            log(t);
+                        }
+                    }
+                });
+            } catch (Throwable t) {
+                log("miuianesthetist err:");
+                log(t);
+            }
+
+            // Allow users to set third-party launcher to be default
             try {
                 findAndHookMethod("com.miui.securitycenter.provider.ThirdDesktopProvider",
                         lpparam.classLoader, "call", String.class, String.class,
@@ -215,4 +258,10 @@ public class DisableSecurityCheck implements IXposedHookLoadPackage {
             }
         }
     }
+
+    private synchronized void initRes(XC_MethodHook.MethodHookParam param) {
+        res = (res == null) ? ((Activity) param.thisObject).getResources() : res;
+    }
+
+
 }
