@@ -5,7 +5,7 @@ android {
     defaultConfig {
         applicationId 'com.xposed.miuianesthetist'
         minSdkVersion 14
-        targetSdkVersion 28
+        targetSdkVersion 29
         versionCode 4
         versionName '3.0'
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -22,7 +22,7 @@ android {
         sourceCompatibility = '1.8'
         targetCompatibility = '1.8'
     }
-    buildToolsVersion = '28.0.3'
+    buildToolsVersion = '29.0.1'
 }
 
 dependencies {
