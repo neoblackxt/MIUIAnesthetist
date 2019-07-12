@@ -136,6 +136,32 @@ public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
         findAndHookMethod(ada, "onCreateOptionsMenu", Menu.class, xc_enable_menuItem);
         findAndHookMethod(ada, "onPrepareOptionsMenu", Menu.class, xc_enable_menuItem);
         findAndHookMethod(ada, "onResume", xc_enable_menuItem);
+        //Allow users to revoke system app internet access permission
+        //FIXME network control state preview abnormal, title disappear or turn off data, invalid after reboot
+        findAndHookMethod(ada, "initData", new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) {
+                try {
+                    initRes(param);
+                    int R_id_am_detail_net = res.getIdentifier("am_detail_net",
+                            "id", "com.miui.securitycenter");
+                    View am_detail_net = ((Activity) param.thisObject).findViewById(R_id_am_detail_net);
+                    am_detail_net.setVisibility(View.VISIBLE);
+                } catch (Throwable t) {
+                    log(t);
+                }
+            }
+        });
+        findAndHookMethod(ada, "onClick", View.class, new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) {
+                try {
+                    setBooleanField(param.thisObject, "mIsSystem", false);
+                } catch (Throwable t) {
+                    log(t);
+                }
+            }
+        });
         // Allow users to set third-party launcher to be default
         findAndHookMethod("com.miui.securitycenter.provider.ThirdDesktopProvider",
                 classLoader, "call", String.class, String.class,
