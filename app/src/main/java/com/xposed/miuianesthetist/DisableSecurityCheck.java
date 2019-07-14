@@ -6,10 +6,14 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.os.Parcel;
+import android.preference.CheckBoxPreference;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.List;
 
 import de.robv.android.xposed.XC_MethodHook;
@@ -19,8 +23,11 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.findAndHookConstructor;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.findAndHookMethod;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.findClass;
+import static com.xposed.miuianesthetist.XposedHelpersWraper.findFirstFieldByExactType;
+import static com.xposed.miuianesthetist.XposedHelpersWraper.findMethodBestMatch;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.getObjectField;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.getStaticBooleanField;
+import static com.xposed.miuianesthetist.XposedHelpersWraper.hookMethod;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.invokeOriginalMethod;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.log;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.setBooleanField;
@@ -29,6 +36,10 @@ import static com.xposed.miuianesthetist.XposedHelpersWraper.setIntField;
 public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
     private static volatile Resources res;
     private static volatile MenuItem menu2;
+
+    @Override
+    public void initZygote(StartupParam startupParam) {
+    }
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
@@ -42,31 +53,93 @@ public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
         }
         //SecurityCenter.apk
         if (lpparam.packageName.equals("com.miui.securitycenter")) {
-            handleSecurityCenter();
+            try {
+                handleSecurityCenter();
+            } catch (Throwable t) {
+                log(t);
+            }
         }
+        //Settings.apk
+        if (lpparam.packageName.equals("com.android.settings")) {
+            try {
+                handleSettings();
+            } catch (Throwable t) {
+                log(t);
+            }
+        }
+
+    }
+
+    private void handleSettings() {
+        //try to return a fake result of if an app is a system app, invalid
+        Class<?> nshClass = findClass("com.android.settings.notification.NotificationSettingsHelper", classLoader);
+        for (Method m : nshClass.getMethods()) {
+            if (Arrays.equals(m.getParameterTypes(), new Class[]{int.class})) {
+                log(m.getName());
+                hookMethod(m, XC_MethodReplacement.returnConstant(false));
+                break;
+            }
+        }
+        final Class<?> appRowClass = findClass("com.android.settings.notification.MiuiNotificationBackend$AppRow", classLoader);
+        findAndHookMethod("com.android.settings.notification.MiuiNotificationBackend", classLoader, "markAppRowWithBlockables",
+                String[].class, appRowClass, String.class, new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) {
+                        log("arg0:" + Arrays.toString((String[]) param.args[0]));
+                        log("arg2:" + param.args[2]);
+                        param.setResult(null);
+                    }
+                });
+
+        //try to allow users disable AppNotificationSettings ,invalid
+        Class<?> ans = findClass("com.android.settings.notification.AppNotificationSettings", classLoader);
+        findAndHookMethod(ans, "onResume", new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) {
+                Object o = null;
+                try {
+                    o = findFirstFieldByExactType(ans, appRowClass).get(param.thisObject);
+                } catch (IllegalAccessException e) {
+                    log(e);
+                }
+                setBooleanField(o, "systemApp", false);
+                Method findPreference = findMethodBestMatch(ans, "findPreference", String.class);
+                CheckBoxPreference block = null;
+                try {
+                    if (findPreference != null) {
+                        findPreference.setAccessible(true);
+                        block = (CheckBoxPreference) findPreference.invoke(param.thisObject, "block");
+                    }
+                } catch (Throwable t) {
+                    log(t);
+                }
+                if (block != null)
+                    block.setEnabled(true);
+            }
+        });
     }
 
     private void handleAndroid() {
-        // Disable integrity check when boot in services.jar
+        //Disable integrity check when boot in services.jar
         Class sms = findClass("com.miui.server.SecurityManagerService"
                 , classLoader);
         findAndHookConstructor(sms, Context.class, boolean.class/*onlyCore*/,
                 new XC_MethodHook() {
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param) {
-                        // Set the instance of SecurityManagerService class to be onlyCore mode,
-                        // then checkSystemSelfProtection() method will do nothing
+                        //Set the instance of SecurityManagerService class to be onlyCore mode,
+                        //then checkSystemSelfProtection() method will do nothing
                         param.args[1] = true;
-                        // Set system apps' states to be not cracked
+                        //Set system apps' states to be not cracked
                         setIntField(param.thisObject, "mSysAppCracked", 0);
                     }
                 });
-        // Remove the limit for disabling system apps in services.jar
+        //Remove the limit for disabling system apps in services.jar
         findAndHookMethod("com.android.server.pm.PackageManagerServiceInjector"
                 , classLoader, "isAllowedDisable",
                 String.class, int.class, XC_MethodReplacement.returnConstant(true));
-        // Prevent some ultra sticky system apps (MiuiDaemon, FindDevice, etc.) from running
-        // after have been disabled in services.jar
+        //Prevent some ultra sticky system apps (MiuiDaemon, FindDevice, etc.) from running
+        //after have been disabled in services.jar
         findAndHookMethod("com.android.server.am.ActivityManagerServiceInjector",
                 classLoader, "shouldAddPersistApp", ApplicationInfo.class,
                 new XC_MethodHook() {
@@ -84,12 +157,28 @@ public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
                         param.setResult(false);
                     }
                 });
-        // Check if MIUI is global version
+
+        //Allow users disable system apps' notification chanel in framework.jar
+        findAndHookConstructor("android.app.NotificationChannel", classLoader, Parcel.class, new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) {
+                setBooleanField(param.thisObject, "mBlockableSystem", true);
+            }
+        });
+
+        findAndHookConstructor("android.app.NotificationChannel", classLoader, String.class, CharSequence.class, int.class, new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) {
+                setBooleanField(param.thisObject, "mBlockableSystem", true);
+            }
+        });
+
+        //Check if MIUI is global version
         if (null == iib) {
             iib = getStaticBooleanField(findClass("miui.os.Build", classLoader),
                     "IS_INTERNATIONAL_BUILD");
         }
-        // Return an intent before it get processed to avoid being hijacked in services.jar
+        //Return an intent before it get processed to avoid being hijacked in services.jar
         if (!iib) {
             Class<?> pmsClazz = findClass("com.android.server.pm.PackageManagerService",
                     classLoader);
@@ -115,8 +204,8 @@ public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
     }
 
     private void handleSecurityCenter() {
-        // Allow users to disable system apps using SecurityCenter's manage apps function
-        // FIXME menuItem get disabled after selected and icon changed
+        //Allow users to disable system apps using SecurityCenter's manage apps function
+        //FIXME menuItem get disabled after selected and icon changed
         Class<?> ada = findClass("com.miui.appmanager.ApplicationsDetailsActivity",
                 classLoader);
         XC_MethodHook xc_enable_menuItem = new XC_MethodHook() {
@@ -162,7 +251,7 @@ public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
                 }
             }
         });
-        // Allow users to set third-party launcher to be default
+        //Allow users to set third-party launcher to be default
         findAndHookMethod("com.miui.securitycenter.provider.ThirdDesktopProvider",
                 classLoader, "call", String.class, String.class,
                 Bundle.class, new XC_MethodHook() {
@@ -171,8 +260,8 @@ public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
                         try {
                             if (param.args[0].equals("getModeAndList")) {
                                 Bundle result = (Bundle) param.getResult();
-                                // mode=0 can't use unauthorized third-party launcher;
-                                // mode=1 can't use official launcher; other value no limit
+                                //mode=0 can't use unauthorized third-party launcher;
+                                //mode=1 can't use official launcher; other value no limit
                                 result.putInt("mode", -1);
                                 param.setResult(result);
                             }
@@ -186,4 +275,5 @@ public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
     private synchronized void initRes(XC_MethodHook.MethodHookParam param) {
         res = (res == null) ? ((Activity) param.thisObject).getResources() : res;
     }
+
 }
