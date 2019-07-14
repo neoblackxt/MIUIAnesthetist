@@ -2,20 +2,6 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 29
-    signingConfigs {
-        debug {
-            storeFile file('D:\\Users\\admin\\Documents\\ApkProjects\\keystore\\testkey.jks')
-            storePassword '123456'
-            keyPassword '123456'
-            keyAlias = 'key0'
-        }
-        release {
-            storeFile file('D:\\Users\\admin\\Documents\\ApkProjects\\keystore\\testkey.jks')
-            storePassword '123456'
-            keyAlias = 'key0'
-            keyPassword '123456'
-        }
-    }
     defaultConfig {
         applicationId 'com.xposed.miuianesthetist'
         minSdkVersion 14
