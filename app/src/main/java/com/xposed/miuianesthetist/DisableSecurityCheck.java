@@ -1,19 +1,12 @@
 package com.xposed.miuianesthetist;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
-import android.content.res.Resources;
 import android.os.Bundle;
-import android.os.Parcel;
-import android.preference.CheckBoxPreference;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 
-import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.List;
 
 import de.robv.android.xposed.XC_MethodHook;
@@ -23,18 +16,13 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.findAndHookConstructor;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.findAndHookMethod;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.findClass;
-import static com.xposed.miuianesthetist.XposedHelpersWraper.findFirstFieldByExactType;
-import static com.xposed.miuianesthetist.XposedHelpersWraper.findMethodBestMatch;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.getObjectField;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.getStaticBooleanField;
-import static com.xposed.miuianesthetist.XposedHelpersWraper.hookMethod;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.invokeOriginalMethod;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.log;
-import static com.xposed.miuianesthetist.XposedHelpersWraper.setBooleanField;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.setIntField;
 
 public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
-    private static volatile Resources res;
     private static volatile MenuItem menu2;
 
     @Override
@@ -59,64 +47,6 @@ public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
                 log(t);
             }
         }
-        //Settings.apk
-        if (lpparam.packageName.equals("com.android.settings")) {
-            try {
-                handleSettings();
-            } catch (Throwable t) {
-                log(t);
-            }
-        }
-
-    }
-
-    private void handleSettings() {
-        //try to return a fake result of if an app is a system app, invalid
-        Class<?> nshClass = findClass("com.android.settings.notification.NotificationSettingsHelper", classLoader);
-        for (Method m : nshClass.getMethods()) {
-            if (Arrays.equals(m.getParameterTypes(), new Class[]{int.class})) {
-                log(m.getName());
-                hookMethod(m, XC_MethodReplacement.returnConstant(false));
-                break;
-            }
-        }
-        final Class<?> appRowClass = findClass("com.android.settings.notification.MiuiNotificationBackend$AppRow", classLoader);
-        findAndHookMethod("com.android.settings.notification.MiuiNotificationBackend", classLoader, "markAppRowWithBlockables",
-                String[].class, appRowClass, String.class, new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) {
-                        log("arg0:" + Arrays.toString((String[]) param.args[0]));
-                        log("arg2:" + param.args[2]);
-                        param.setResult(null);
-                    }
-                });
-
-        //try to allow users disable AppNotificationSettings ,invalid
-        Class<?> ans = findClass("com.android.settings.notification.AppNotificationSettings", classLoader);
-        findAndHookMethod(ans, "onResume", new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) {
-                Object o = null;
-                try {
-                    o = findFirstFieldByExactType(ans, appRowClass).get(param.thisObject);
-                } catch (IllegalAccessException e) {
-                    log(e);
-                }
-                setBooleanField(o, "systemApp", false);
-                Method findPreference = findMethodBestMatch(ans, "findPreference", String.class);
-                CheckBoxPreference block = null;
-                try {
-                    if (findPreference != null) {
-                        findPreference.setAccessible(true);
-                        block = (CheckBoxPreference) findPreference.invoke(param.thisObject, "block");
-                    }
-                } catch (Throwable t) {
-                    log(t);
-                }
-                if (block != null)
-                    block.setEnabled(true);
-            }
-        });
     }
 
     private void handleAndroid() {
@@ -157,22 +87,6 @@ public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
                         param.setResult(false);
                     }
                 });
-
-        //Allow users disable system apps' notification chanel in framework.jar
-        findAndHookConstructor("android.app.NotificationChannel", classLoader, Parcel.class, new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) {
-                setBooleanField(param.thisObject, "mBlockableSystem", true);
-            }
-        });
-
-        findAndHookConstructor("android.app.NotificationChannel", classLoader, String.class, CharSequence.class, int.class, new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) {
-                setBooleanField(param.thisObject, "mBlockableSystem", true);
-            }
-        });
-
         //Check if MIUI is global version
         if (null == iib) {
             iib = getStaticBooleanField(findClass("miui.os.Build", classLoader),
@@ -225,36 +139,7 @@ public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
         findAndHookMethod(ada, "onCreateOptionsMenu", Menu.class, xc_enable_menuItem);
         findAndHookMethod(ada, "onPrepareOptionsMenu", Menu.class, xc_enable_menuItem);
         findAndHookMethod(ada, "onResume", xc_enable_menuItem);
-        //Allow users to revoke system app internet access permission
-        //FIXME network control state preview abnormal, title disappear or turn off data, invalid after reboot
-        findAndHookMethod(ada, "initData", new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) {
-                try {
-                    initRes(param);
-                    int R_id_am_detail_net = res.getIdentifier("am_detail_net",
-                            "id", "com.miui.securitycenter");
-                    View am_detail_net = ((Activity) param.thisObject).findViewById(R_id_am_detail_net);
-                    am_detail_net.setVisibility(View.VISIBLE);
-                } catch (Throwable t) {
-                    log(t);
-                }
-            }
-        });
-        findAndHookMethod(ada, "onClick", View.class, new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) {
-                try {
-                    setBooleanField(param.thisObject, "mIsSystem", false);
-                } catch (Throwable t) {
-                    log(t);
-                }
-            }
-        };
-        findAndHookMethod(ada, "onCreateOptionsMenu", Menu.class, xc_enable_menuItem);
-        findAndHookMethod(ada, "onPrepareOptionsMenu", Menu.class, xc_enable_menuItem);
-        findAndHookMethod(ada, "onResume", xc_enable_menuItem);
-        // Allow users to set third-party launcher to be default
+        //Allow users to set third-party launcher to be default
         findAndHookMethod("com.miui.securitycenter.provider.ThirdDesktopProvider",
                 classLoader, "call", String.class, String.class,
                 Bundle.class, new XC_MethodHook() {
@@ -274,10 +159,4 @@ public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
                     }
                 });
     }
-
-    private synchronized void initRes(XC_MethodHook.MethodHookParam param) {
-        res = (res == null) ? ((Activity) param.thisObject).getResources() : res;
-    }
-
-
 }
