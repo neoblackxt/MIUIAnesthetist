@@ -9,7 +9,7 @@
             android:value="true" />
         <meta-data
             android:name="xposeddescription"
-            android:value="麻醉MIUI，以便对MIUI商店等癌组织进行无痛切除" />
+            android:value="@string/description" />
         <meta-data
             android:name="xposedminversion"
             android:value="53" />
