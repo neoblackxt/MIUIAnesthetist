@@ -4,17 +4,25 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.content.res.Resources;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.preference.CheckBoxPreference;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import java.io.File;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XC_MethodReplacement;
@@ -27,6 +35,7 @@ import static com.xposed.miuianesthetist.XposedHelpersWraper.findFirstFieldByExa
 import static com.xposed.miuianesthetist.XposedHelpersWraper.findMethodBestMatch;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.getObjectField;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.getStaticBooleanField;
+import static com.xposed.miuianesthetist.XposedHelpersWraper.getStaticObjectField;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.hookMethod;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.invokeOriginalMethod;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.log;
@@ -43,10 +52,9 @@ public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
-        classLoader = lpparam.classLoader;
         if (lpparam.packageName.equals("android")) {
             try {
-                handleAndroid();
+                handleAndroid(lpparam);
             } catch (Throwable t) {
                 log(t);
             }
@@ -54,7 +62,7 @@ public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
         //SecurityCenter.apk
         if (lpparam.packageName.equals("com.miui.securitycenter")) {
             try {
-                handleSecurityCenter();
+                handleSecurityCenter(lpparam);
             } catch (Throwable t) {
                 log(t);
             }
@@ -62,7 +70,16 @@ public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
         //Settings.apk
         if (lpparam.packageName.equals("com.android.settings")) {
             try {
-                handleSettings();
+                handleSettings(lpparam);
+            } catch (Throwable t) {
+                log(t);
+            }
+        }
+
+        //MiuiInstaller.apk
+        if (lpparam.packageName.equals("com.miui.packageinstaller")) {
+            try {
+                handleInstaller(lpparam);
             } catch (Throwable t) {
                 log(t);
             }
@@ -70,8 +87,61 @@ public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
 
     }
 
-    private void handleSettings() {
-        //try to return a fake result of if an app is a system app, invalid
+    //Remove limit for installing system apps from unofficial channels
+    private void handleInstaller(XC_LoadPackage.LoadPackageParam lpparam) {
+        ClassLoader classLoader = lpparam.classLoader;
+        Class<?> pia = findClass("com.android.packageinstaller.PackageInstallerActivity", classLoader);
+        if (pia == null) return;
+        List<Method> methods = new LinkedList<>();
+        for (Method m : pia.getMethods()) {
+            if (Arrays.equals(m.getParameterTypes(), new Class[]{Uri.class})) {
+                methods.add(m);
+            }
+        }
+        XC_MethodHook xc_methodHook = new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                Field[] fields = pia.getDeclaredFields();
+                Field P = null;
+                for (Field f : fields) {
+                    if (f.getType() == List.class) {
+                        List sf = (List) getStaticObjectField(pia, f.getName());
+                        if (sf.contains("com.android.vending")) {
+                            P = f;
+                            break;
+                        }
+                    }
+                }
+                Uri uri = (Uri) param.args[0];
+                String scheme = uri.getScheme();
+                if (scheme == null || !scheme.equals("file")) return;
+                String path = uri.getPath();
+                if (TextUtils.isEmpty(path)) return;
+                Class<?> ppc = findClass("com.android.packageinstaller.compat.PackageParserCompat", classLoader);
+                Method parsePackage = findMethodBestMatch(ppc, "parsePackage", File.class, int.class);//file, 0
+                Method createPackageUserState = findMethodBestMatch(ppc, "createPackageUserState");
+                Method generatePackageInfo = findMethodBestMatch(ppc, "generatePackageInfo", Object.class, int[].class, int.class, long.class, long.class, Set.class, Object.class);
+                //this.d = PackageParserCompat.generatePackageInfo(v1_1, v2, 0x1080, 0, 0, ((Set)v2), PackageParserCompat.createPackageUserState());
+                File file = new File(path);
+                Object v1_1 = parsePackage.invoke(null, file, 0);
+                int[] v2 = {};
+                PackageInfo packageInfo = (PackageInfo) generatePackageInfo.invoke(null, v1_1, v2, 0x1080, 0, 0, new HashSet(), createPackageUserState.invoke(null));
+                String packageName = packageInfo.packageName;
+                List p = (List<String>) getStaticObjectField(pia, P.getName());
+                if (p != null && !p.contains(packageName))
+                    p.add(packageName);
+            }
+        };
+        for (Method m : methods) {
+            String mname = m.getName();
+            findAndHookMethod(pia, mname, Uri.class, xc_methodHook);
+        }
+
+    }
+
+    private void handleSettings(XC_LoadPackage.LoadPackageParam lpparam) {
+        ClassLoader classLoader = lpparam.classLoader;
+        //Try to return a fake result of if an app is a system app, invalid
         Class<?> nshClass = findClass("com.android.settings.notification.NotificationSettingsHelper", classLoader);
         for (Method m : nshClass.getMethods()) {
             if (Arrays.equals(m.getParameterTypes(), new Class[]{int.class})) {
@@ -91,7 +161,7 @@ public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
                     }
                 });
 
-        //try to allow users disable AppNotificationSettings ,invalid
+        //Try to allow users disable AppNotificationSettings ,invalid
         Class<?> ans = findClass("com.android.settings.notification.AppNotificationSettings", classLoader);
         findAndHookMethod(ans, "onResume", new XC_MethodHook() {
             @Override
@@ -119,7 +189,13 @@ public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
         });
     }
 
-    private void handleAndroid() {
+    private void handleAndroid(XC_LoadPackage.LoadPackageParam lpparam) {
+        ClassLoader classLoader = lpparam.classLoader;
+        //Check if MIUI is global version
+        if (null == iib) {
+            iib = getStaticBooleanField(findClass("miui.os.Build", classLoader),
+                    "IS_INTERNATIONAL_BUILD");
+        }
         //Disable integrity check when boot in services.jar
         Class sms = findClass("com.miui.server.SecurityManagerService"
                 , classLoader);
@@ -165,19 +241,12 @@ public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
                 setBooleanField(param.thisObject, "mBlockableSystem", true);
             }
         });
-
         findAndHookConstructor("android.app.NotificationChannel", classLoader, String.class, CharSequence.class, int.class, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) {
                 setBooleanField(param.thisObject, "mBlockableSystem", true);
             }
         });
-
-        //Check if MIUI is global version
-        if (null == iib) {
-            iib = getStaticBooleanField(findClass("miui.os.Build", classLoader),
-                    "IS_INTERNATIONAL_BUILD");
-        }
         //Return an intent before it get processed to avoid being hijacked in services.jar
         if (!iib) {
             Class<?> pmsClazz = findClass("com.android.server.pm.PackageManagerService",
@@ -194,7 +263,7 @@ public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
                                     ("http".equals(intent.getScheme()) ||
                                             "https".equals(intent.getScheme())) &&
                                             "android.intent.action.VIEW".equals(intent.getAction())) {
-                                //return mResolveInfo of the first arg pms
+                                //Return mResolveInfo of the first arg pms
                                 return getObjectField(param.args[0], "mResolveInfo");
                             }
                             return invokeOriginalMethod(param.method, param.thisObject, param.args);
@@ -203,7 +272,8 @@ public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
         }
     }
 
-    private void handleSecurityCenter() {
+    private void handleSecurityCenter(XC_LoadPackage.LoadPackageParam lpparam) {
+        ClassLoader classLoader = lpparam.classLoader;
         //Allow users to disable system apps using SecurityCenter's manage apps function
         //FIXME menuItem get disabled after selected and icon changed
         Class<?> ada = findClass("com.miui.appmanager.ApplicationsDetailsActivity",
