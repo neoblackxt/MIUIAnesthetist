@@ -14,6 +14,8 @@ MIUI麻醉师Xposed模块，麻醉MIUI，以便对小米应用商店等癌组织
 
 开启安全中心-应用管理的停用系统应用的功能。
 
+解除无法从非官方渠道安装系统应用的限制。
+
 ## 使用方法
 安装并启用此Xposed模块，重启系统。
 
@@ -38,7 +40,7 @@ MIUI麻醉师Xposed模块，麻醉MIUI，以便对小米应用商店等癌组织
 # <a id="EN"></a>MIUI Anesthetist
 Cut out those cancer apps on MIUI painlessly with the help of this Xposed module.
 
-## FEATURE
+## FEATURES
 Disable MIUI integrity check when boot to prevent boot-loop, so that you can safely force delete System Updater and other system apps.
 
 Remove limit for disabling some packages and prevent some package auto re-enable when boot.
@@ -48,6 +50,8 @@ Prevent MI Market from hijacking Google Play on MIUI China ROMs.
 Remove limit for third-party launcher on MIUI China ROMs. Thanks to tianma8023@github [FuckMiui](https://github.com/neoblackxt/FuckMiui)
 
 Allow users to use Security - Manage apps to disable system apps.
+
+Remove limit for installing system apps from unofficial channels on MIUI China ROMs.
 
 ## USAGE
 Install and enable this Xposed module then reboot.
