@@ -1,5 +1,5 @@
-# MIUI Anesthetist
-MIUI麻醉师Xposed模块，麻醉MIUI，以便对小米应用商店等癌组织进行无痛切除
+# MIUI麻醉师
+对MIUI进行外科手术式打击。
 
 [For English users](#EN)
 
@@ -38,7 +38,7 @@ MIUI麻醉师Xposed模块，麻醉MIUI，以便对小米应用商店等癌组织
 如果因删除小米应用商店而无法开机，将[小米应用商店](http://apkpure.co/xiaomi-market-com-xiaomi-market/)文件放到`/data/app/xiaomimarket/xiaomimarket.apk`,或者刷机（**不必**清除`/data`分区）。
 
 # <a id="EN"></a>MIUI Anesthetist
-Cut out those cancer apps on MIUI painlessly with the help of this Xposed module.
+Carry out surgical strikes against MIUI.
 
 ## FEATURES
 Disable MIUI integrity check when boot to prevent boot-loop, so that you can safely force delete System Updater and other system apps.
