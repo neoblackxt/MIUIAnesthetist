@@ -59,11 +59,6 @@
 ②Magisk配置模块是否启用的方式是查看`/data/adb/modules/<module-id>/disable`文件是否存在，存在为禁用，反之为启用（旧版Magisk不支持此方式）<br>
 ③(Ed)Xposed启用模块的配置文件为`/data/user_de/0/<(Ed)Xposed-installer(manager)-package-name>/conf/modules.list`，配置格式为Xposed模块apk文件的绝对路径，每行一个，形如`/data/app/<Xposed-module-package-name>-<random-string>/base.apk`<br>
 
-
-**其他：**<br>
-[小米应用商店下载](http://apkpure.co/xiaomi-market-com-xiaomi-market/)（此网站中国大陆用户可能无法访问）
-
-
 # <a id="EN"></a>MIUI Anesthetist
 Carry out surgical strikes against MIUI.  This module is committed to remove the limitations of MIUI, allows you enter the god mode of MIUI.
 
