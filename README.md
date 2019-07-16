@@ -50,14 +50,14 @@
 ③用电脑连接recovery模式中的手机，在`cmd`中执行`adb shell`，然后`rm /data/system/users/0/package-restrictions.xml`。<br>
 刷机**不会**有任何帮助，擦除`/data`分区是可行的但没必要，因为那样会丢失除了`/sdcard`之外的所有数据。
 
-如果因删除系统应用无法开机，在recovery模式用mm管理器禁用师助手模块即可恢复所有系统应用。你最好提阅读它的[使用说明](https://github.com/Magisk-Modules-Repo/mm/blob/master/README.md)。
+如果因删除系统应用无法开机，在recovery模式用mm管理器禁用师助手模块即可恢复所有系统应用。你最好提前阅读它的[使用说明](https://github.com/Magisk-Modules-Repo/mm/blob/master/README.md)。
 
 如果你没有使用助手模块而是用文件管理器彻底删掉了某个系统应用，可通过刷机恢复（**不必**清除`/data`分区）。
 
 **高级：**<br>
-①`package-restrictions.xml`中有关冻结的元素属性是`enabled`，`enabled=3`为冻结，删除`enabled=3`即解冻。<br>
+①`/data/system/users/0/package-restrictions.xml`文件中有关冻结的元素属性是`enabled`，`enabled=3`为冻结，删除`enabled=3`即解冻。<br>
 ②Magisk配置模块是否启用的方式是查看`/data/adb/modules/<module-id>/disable`文件是否存在，存在为禁用，反之为启用（旧版Magisk不支持此方式）<br>
-③(Ed)Xposed启用模块的配置文件为`/data/user_de/0/<package-name>/conf/modules.list`，配置格式为Xposed模块apk文件的绝对路径，每行一个，形如`/data/app/<Xposed-package-name>-<random-string>/base.apk`<br>
+③(Ed)Xposed启用模块的配置文件为`/data/user_de/0/<(Ed)Xposed-installer(manager)-package-name>/conf/modules.list`，配置格式为Xposed模块apk文件的绝对路径，每行一个，形如`/data/app/<Xposed-module-package-name>-<random-string>/base.apk`<br>
 
 
 **其他：**<br>
@@ -65,16 +65,16 @@
 
 
 # <a id="EN"></a>MIUI Anesthetist
-Carry out surgical strikes against MIUI.
+Carry out surgical strikes against MIUI.  This module is committed to remove the limitations of MIUI, allows you enter the god mode of MIUI.
 
 ## FEATURES
 Disable MIUI integrity check when boot to prevent boot-loop, so that you can safely force delete System Updater and other system apps.
 
 Remove limit for disabling some packages and prevent some package auto re-enable when boot.
 
-Prevent MI Market from hijacking Google Play on MIUI China ROMs.
+Prevent MI Market from hijacking Google Play on MIUI China ROMs. Thanks to & enlightened from: 跟悟空扯关系@CoolApk [去除MIUI强制调用小米应用商店（非改build）](https://www.coolapk.com/feed/8492730?shareKey=MjM2ODkyMTI5Zjg4NWNlZDJhMzI~)、ccat3z@github 我不要小米应用市场
 
-Remove limit for third-party launcher on MIUI China ROMs. Thanks to tianma8023@github [FuckMiui](https://github.com/neoblackxt/FuckMiui)
+Remove limit for third-party launcher on MIUI China ROMs. Thanks to & enlightened from: tianma8023@github [FuckMiui](https://github.com/neoblackxt/FuckMiui)
 
 Allow users to use Security - Manage apps to disable system apps.
 
@@ -83,25 +83,44 @@ Remove limit for installing system apps from unofficial channels on MIUI China R
 ## USAGE
 Install and enable this Xposed module then reboot.
 
-Freely disable the packages which you don't need.
+Freely disable the packages which you don't need. (These packages will be keep disabled after updating system)
 
-If you want to remove system apps, I suggest you use [Magisk module](https://github.com/neoblackxt/MIUIAnesthetist/releases/download/v2.0/MIUIAnesthetistHelperMagiskModule.zip) in release to remove them systemless-ly, 
-so that if something goes wrong, use [mm](https://github.com/Magisk-Modules-Repo/mm) disable this Magisk module, then all removed apps will come back again. 
-
-Modify `install.sh` file in this Magisk module: add the directories path which app you want to remove locate in to `REPLACE=""`, one path per line, there is a good example on a couple of lines above.
-This Magisk module only remove MiuiSuperMarket by default, it's useless to MIUI global edition user, remove that line.
+To remove system apps, use [MIUI Anesthetist Helper Magisk module](https://github.com/neoblackxt/MIUIAnesthetist/releases/download/v2.0/MIUIAnesthetistHelperMagiskModule.zip)(hereinafter referred to as "helper module") in release, and [Magisk Manager for Recovery Mode](https://github.com/Magisk-Modules-Repo/mm)(hereinafter referred to as "mm") is also needed. (These packages will be keep removed after updating system)<br>
+Modify `install.sh` file in helper module: add the directory paths which the apps you want to remove are located in to `REPLACE=""`, one path per line, there is a good example on a couple of lines above in this file. Once finished, you can add it to Magisk Manager or install it in recovery mode.<br>
+This helper module only remove MiuiSuperMarket by default, it's useless to MIUI global edition user, remove that line.<br>
+You may share your modified and tested without problem helper module with you friends. :)
 
 Learn more: [Magisk guides](https://topjohnwu.github.io/Magisk/guides.html#remove-folders)
 
 ## NOTICE
-If this module disabled by accident, its magic will disappear and then your phone will boot-loop. So remember to reverse your operation on system apks before you disable this module.
+The toolchain is as: Magisk -> (Riru-Core) -> (Riru-Ed)Xposed -> MIUI Anesthetist
 
-Some system apps are Android core programs, they should never be disabled or removed. If you have no idea about a system app, you should Google it first. 
+You should flash Magisk immediately as soon as you update system in recovery mode to ensure the toolchain is work.
+
+If this module disabled by accident, its magic will disappear and then your phone maybe boot-loop. (See **RESCUE**)<br>
+The case can be:<br>
+①This Xposed module is disabled<br>
+②Xposed framework is disabled<br>
+③Magisk which Xposed rely on is disabled<br>
+④After reinstall or update this Xposed module, Xposed installer doesn't detect its update.(You have to disable it and then re-enable it manually in Xposed module list)
+
+Some system apps are Android core programs, they should **never** be disabled or removed. If you have no idea about a system app, you should Google it first and think twice. 
 
 ## RESCUE
-Flash ROM (**NOT** need to wipe /data) if you have really removed some system apps files from ROM.
+If you have disabled some system apps, remove or rename `/data/system/users/0/package-restrictions.xml` file to reset disabling app settings.
 
-Remove `/data/system/users/0/package-restrictions.xml` file if you just disabled some system apps.
+If you have removed some system apps, disable the helper module using mm to recover all system apps. BTW, you'd better read its [README](https://github.com/Magisk-Modules-Repo/mm/blob/master/README.md) to know its usage early.
+
+If you have **really** removed some system app files from ROM, Flash ROM (**NOT** need to wipe `/data`).
+
+①`/data/system/users/0/package-restrictions.xml`文件中有关冻结的元素属性是`enabled`，`enabled=3`为冻结，删除`enabled=3`即解冻。<br>
+②Magisk配置模块是否启用的方式是查看`/data/adb/modules/<module-id>/disable`文件是否存在，存在为禁用，反之为启用（旧版Magisk不支持此方式）<br>
+③(Ed)Xposed启用模块的配置文件为`/data/user_de/0/<(Ed)Xposed-installer(manager)-package-name>/conf/modules.list`，配置格式为Xposed模块apk文件的绝对路径，每行一个，形如`/data/app/<Xposed-module-package-name>-<random-string>/base.apk`<br>
+
+**Advanced:**<br>
+①In `/data/system/users/0/package-restrictions.xml` file, the `enabled` attribute determine if a package is disabled. `enabled=3` means to be disabled, and remove `enabled=3` to enable it.<br>
+②Magisk determine if a Magisk module is enabled by looking for `/data/adb/modules/<module-id>/disable` file. Existence means to be disabled.(Some old versions don't support this)<br>
+③(Ed)Xposed's config file is `/data/user_de/0/<(Ed)Xposed-installer(manager)-package-name>/conf/modules.list` file, its format is Xposed module apk files' absolute paths, one path per line, like `/data/app/<Xposed-module-package-name>-<random-string>/base.apk`<br>
 
 ## MISCELLANEOUS
-Help me translate or optimize this readme if you like.
+Help me translate or optimize this README if you like.
