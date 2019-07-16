@@ -113,10 +113,6 @@ If you have removed some system apps, disable the helper module using mm to reco
 
 If you have **really** removed some system app files from ROM, Flash ROM (**NOT** need to wipe `/data`).
 
-①`/data/system/users/0/package-restrictions.xml`文件中有关冻结的元素属性是`enabled`，`enabled=3`为冻结，删除`enabled=3`即解冻。<br>
-②Magisk配置模块是否启用的方式是查看`/data/adb/modules/<module-id>/disable`文件是否存在，存在为禁用，反之为启用（旧版Magisk不支持此方式）<br>
-③(Ed)Xposed启用模块的配置文件为`/data/user_de/0/<(Ed)Xposed-installer(manager)-package-name>/conf/modules.list`，配置格式为Xposed模块apk文件的绝对路径，每行一个，形如`/data/app/<Xposed-module-package-name>-<random-string>/base.apk`<br>
-
 **Advanced:**<br>
 ①In `/data/system/users/0/package-restrictions.xml` file, the `enabled` attribute determine if a package is disabled. `enabled=3` means to be disabled, and remove `enabled=3` to enable it.<br>
 ②Magisk determine if a Magisk module is enabled by looking for `/data/adb/modules/<module-id>/disable` file. Existence means to be disabled.(Some old versions don't support this)<br>
