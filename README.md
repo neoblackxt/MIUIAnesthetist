@@ -60,7 +60,7 @@
 ③(Ed)Xposed启用模块的配置文件为`/data/user_de/0/<(Ed)Xposed-installer(manager)-package-name>/conf/modules.list`，配置格式为Xposed模块apk文件的绝对路径，每行一个，形如`/data/app/<Xposed-module-package-name>-<random-string>/base.apk`<br>
 
 # <a id="EN"></a>MIUI Anesthetist
-Carry out surgical strikes against MIUI.  This module is committed to remove the limitations of MIUI, allows you enter the god mode of MIUI.
+Carry out surgical strikes against MIUI.  This module is committed to remove the limitations of MIUI, allows you to enter the god mode of MIUI.
 
 ## FEATURES
 Disable MIUI integrity check when boot to prevent boot-loop, so that you can safely force delete System Updater and other system apps.
