@@ -19,6 +19,8 @@
 ## 使用方法
 安装并启用此Xposed模块，重启系统。
 
+使用太极框架的用户须安装太极Magisk开启太极阳，按需添加应用： 应用包管理组件、安全中心、设置。
+
 用任何你喜欢的工具/方式冻结你需要冻结的应用。即使安装系统更新，应用也会保持被冻结的状态。
 
 使用release中的[MIUI麻醉师助手Magisk模块](https://github.com/neoblackxt/MIUIAnesthetist/releases/download/v2.0/MIUIAnesthetistHelperMagiskModule.zip)（以下简称助手模块）移除你想要移除的系统应用，并安装[mm管理器](https://github.com/Magisk-Modules-Repo/mm)。即使安装系统更新，应用也会保持被移除的状态。<br>
