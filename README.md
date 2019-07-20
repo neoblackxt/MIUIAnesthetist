@@ -108,7 +108,7 @@ If you have disabled some system apps, remove or rename `/data/system/users/0/pa
 
 If you have removed some system apps, disable the helper module using mm to recover all system apps. BTW, you'd better read its [README](https://github.com/Magisk-Modules-Repo/mm/blob/master/README.md) to know its usage early.
 
-If you have **really** removed some system app files from ROM, Flash ROM (**NOT** need to wipe `/data`).
+If you have **really** removed some system app files from ROM, flash ROM (**NOT** need to wipe `/data`).
 
 **Advanced:**<br>
 ①In `/data/system/users/0/package-restrictions.xml` file, the `enabled` attribute determine if a package is disabled. `enabled=3` means to be disabled, and remove `enabled=3` to enable it.<br>
