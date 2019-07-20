@@ -24,7 +24,7 @@
 用任何你喜欢的工具/方式冻结你需要冻结的应用。即使安装系统更新，应用也会保持被冻结的状态。
 
 使用release中的[MIUI麻醉师助手Magisk模块](https://github.com/neoblackxt/MIUIAnesthetist/releases/download/v2.0/MIUIAnesthetistHelperMagiskModule.zip)（以下简称助手模块）移除你想要移除的系统应用，并安装[mm管理器](https://github.com/Magisk-Modules-Repo/mm)。即使安装系统更新，应用也会保持被移除的状态。<br>
-此助手模块默认只移除小米应用商店。修改此模块中的`install.sh`文件，将你想要移除的应用的所在目录填写在`REPLACE=""`中，一行一个，格式参照文件中上面几行的例子。修改完成后在Magisk Manager中安装它或在recovery模式下刷入它。<br>
+此助手模块默认只移除小米应用商店。修改此模块中的`install.sh`文件，将你想要移除的应用的所在目录填写在`REPLACE=""`中，一行一个，格式参照文件中上面几行的例子。修改完成后在[Magisk Manager](https://github.com/topjohnwu/Magisk/releases)中安装它或在recovery模式下刷入它。<br>
 你可以将你修改过的并且测试过没有问题的助手模块分享给你网络社区中的朋友们 :)
 
 
@@ -83,7 +83,7 @@ Install and enable this Xposed module then reboot.
 Freely disable the packages which you don't need. (These packages will be keep disabled after updating system)
 
 To remove system apps, use [MIUI Anesthetist Helper Magisk module](https://github.com/neoblackxt/MIUIAnesthetist/releases/download/v2.0/MIUIAnesthetistHelperMagiskModule.zip)(hereinafter referred to as "helper module") in release, and [Magisk Manager for Recovery Mode](https://github.com/Magisk-Modules-Repo/mm)(hereinafter referred to as "mm") is also needed. (These packages will be keep removed after updating system)<br>
-Modify `install.sh` file in helper module: add the directory paths which the apps you want to remove are located in to `REPLACE=""`, one path per line, there is a good example on a couple of lines above in this file. Once finished, you can add it to Magisk Manager or install it in recovery mode.<br>
+Modify `install.sh` file in helper module: add the directory paths which the apps you want to remove are located in to `REPLACE=""`, one path per line, there is a good example on a couple of lines above in this file. Once finished, you can add it to [Magisk Manager](https://github.com/topjohnwu/Magisk/releases) or install it in recovery mode.<br>
 This helper module only remove MiuiSuperMarket by default, it's useless to MIUI global edition user, remove that line.<br>
 You may share your modified and tested without problem helper module with you friends. :)
 
