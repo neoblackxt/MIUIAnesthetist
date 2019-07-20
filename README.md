@@ -52,7 +52,7 @@
 ③用电脑连接recovery模式中的手机，在`cmd`中执行`adb shell`，然后`rm /data/system/users/0/package-restrictions.xml`。<br>
 刷机**不会**有任何帮助，擦除`/data`分区是可行的但没必要，因为那样会丢失除了`/sdcard`之外的所有数据。
 
-如果因删除系统应用无法开机，在recovery模式用mm管理器禁用师助手模块即可恢复所有系统应用。你最好提前阅读它的[使用说明](https://github.com/Magisk-Modules-Repo/mm/blob/master/README.md)。
+如果因删除系统应用无法开机，在recovery模式用mm管理器禁用助手模块即可恢复所有系统应用。你最好提前阅读它的[使用说明](https://github.com/Magisk-Modules-Repo/mm/blob/master/README.md)。
 
 如果你没有使用助手模块而是用文件管理器彻底删掉了某个系统应用，可通过刷机恢复（**不必**清除`/data`分区）。
 
