@@ -1,6 +1,8 @@
 # MIUI Anesthetist
 Carry out surgical strikes against MIUI. This module is committed to remove the limitations of MIUI, allowing you to enter the God mode of MIUI.
 
+[中文版](https://github.com/neoblackxt/MIUIAnesthetist/blob/master/README_zh.md)
+
 ## FEATURES
 Disable MIUI integrity check during boot to prevent boot-loop, so that you can safely force delete System Updater and other system apps.
 
