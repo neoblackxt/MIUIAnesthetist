@@ -6,7 +6,7 @@ Carry out surgical strikes against MIUI. This module is committed to remove the 
 ## FEATURES
 Disable MIUI integrity check during boot to prevent boot-loop, so that you can safely force delete System Updater and other system apps.
 
-Remove limit for disabling some packages and prevent some packages from re-enabling during reboot.(For some ultra-sticky system apps we have to reboot after disabling them to take effect)
+Remove limit for disabling some packages and prevent some packages from re-enabling during reboot.(For some ultra-sticky system apps we have to **reboot** after disabling them to take effect)
 
 Prevent MI Market from hijacking Google Play on MIUI China ROMs. Thanks to & for the inspiration from: 跟悟空扯关系@CoolApk 去除MIUI强制调用小米应用商店（非改build）、ccat3z@github 我不要小米应用市场
 
