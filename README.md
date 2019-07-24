@@ -19,7 +19,7 @@ Remove limit for installing system apps from unofficial channels on MIUI China R
 ## USAGE
 Install and enable this Xposed module, then reboot.
 
-Freely disable the packages which you don't need. (These packages will be keep disabled after updating system)
+Freely disable the packages which you don't need. (Some ultra-sticky system apps need to reboot to take effect, these packages will be keep disabled after updating system)
 
 To remove system apps, use [MIUI Anesthetist Helper Magisk module](https://github.com/neoblackxt/MIUIAnesthetist/releases/download/v2.0/MIUIAnesthetistHelperMagiskModule.zip)(hereinafter referred to as "helper module") in release, and [Magisk Manager for Recovery Mode](https://github.com/Magisk-Modules-Repo/mm)(hereinafter referred to as "mm") is also needed. (These packages will be kept removed after updating system)<br>
 Modify `install.sh` file in helper module: add the directory paths which the apps you want to remove are located in to `REPLACE=""`, one path per line, there is a good example in a couple of lines above in this file. Once finished, you can add it to [Magisk Manager](https://github.com/topjohnwu/Magisk/releases) or install it in recovery mode.<br>
