@@ -217,6 +217,11 @@ public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
         findAndHookMethod("com.android.server.pm.PackageManagerServiceInjector"
                 , classLoader, "isAllowedDisable",
                 String.class, int.class, XC_MethodReplacement.returnConstant(true));
+        //Remove the limit for installing WebViewGoogle manually on MIUI China ROM in services.jar
+        findAndHookMethod("com.android.server.pm.PackageManagerServiceInjector",
+                classLoader, "isAllowedInstall",
+                Context.class, File.class, int.class, String.class,
+                XC_MethodReplacement.returnConstant(true));
         //Prevent some ultra sticky system apps (MiuiDaemon, FindDevice, etc.) from running
         //after have been disabled in services.jar
         findAndHookMethod("com.android.server.am.ActivityManagerServiceInjector",
