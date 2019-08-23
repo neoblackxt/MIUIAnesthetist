@@ -206,6 +206,9 @@ public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
                         //Set the instance of SecurityManagerService class to be onlyCore mode,
                         //then checkSystemSelfProtection() method will do nothing
                         param.args[1] = true;
+                    }
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) {
                         //Set system apps' states to be not cracked
                         setIntField(param.thisObject, "mSysAppCracked", 0);
                     }
