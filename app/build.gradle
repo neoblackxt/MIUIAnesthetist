@@ -10,7 +10,6 @@ android {
         versionName '3.0'
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         manifestPlaceholders = [:]
-        signingConfig signingConfigs.release
     }
     buildTypes {
         release {
