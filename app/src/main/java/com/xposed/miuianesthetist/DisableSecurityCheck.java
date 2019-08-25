@@ -16,7 +16,7 @@ import android.preference.CheckBoxPreference;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
+import android.widget.Toast;
 
 import java.io.File;
 import java.lang.reflect.Field;
@@ -444,8 +444,43 @@ public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
         setProp.invoke(null,key,value);
     }
 
-    private synchronized void initRes(XC_MethodHook.MethodHookParam param) {
-        res = (res == null) ? ((Activity) param.thisObject).getResources() : res;
+    private void callPreference(XC_MethodHook.MethodHookParam param, String key, boolean value){
+        Activity activity = (Activity) param.thisObject;
+        ContentResolver contentResolver = activity.getContentResolver();
+        Bundle bundle = new Bundle();
+        bundle.putInt("type", 1);
+        bundle.putString("key", key);
+        bundle.putBoolean("value", value);
+        remoteChange("SET", bundle,contentResolver);
+        contentResolver.notifyChange(Uri.withAppendedPath(Uri.parse("content://com.miui.securitycenter.remoteprovider"), key), null, false);
+    }
+
+    private Bundle remoteChange(String action, Bundle bundle, ContentResolver contentResolver) {
+        Uri uri;
+        if (getMyUerId()==999) {
+            Uri parse = Uri.parse("content://com.miui.securitycenter.remoteprovider");
+            Uri.Builder buildUpon = parse.buildUpon();
+            String authority = "0@" +
+                    parse.getEncodedAuthority();
+            buildUpon.encodedAuthority(authority);
+            uri = buildUpon.build();
+        } else {
+            uri = Uri.parse("content://com.miui.securitycenter.remoteprovider");
+        }
+        return contentResolver.call(uri, "callPreference", action, bundle);
+    }
+
+    private int getMyUerId() {
+        int myUserId = 0;
+        if (Build.VERSION.SDK_INT >= 21) {
+            try {
+                Integer num = (Integer) findMethodBestMatch(android.os.UserHandle.class, "myUserId").invoke(null);
+                if (num != null) myUserId = num;
+            } catch (Exception e) {
+                log(e);
+            }
+        }
+        return myUserId;
     }
 
     private void bypassSuperNotCalledException(XC_MethodHook.MethodHookParam param) {
