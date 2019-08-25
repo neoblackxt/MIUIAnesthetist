@@ -14,10 +14,7 @@ import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
 public class XposedHelpersWraper {
-    //TODO global prevent force close
-
     private static String TAG = "Xposed";
-
     public static String getTAG() {
         return TAG;
     }

@@ -1,12 +1,15 @@
 package com.xposed.miuianesthetist;
 
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.preference.CheckBoxPreference;
@@ -17,6 +20,7 @@ import android.view.View;
 
 import java.io.File;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -31,8 +35,9 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.findAndHookConstructor;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.findAndHookMethod;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.findClass;
-import static com.xposed.miuianesthetist.XposedHelpersWraper.findFirstFieldByExactType;
+import static com.xposed.miuianesthetist.XposedHelpersWraper.findField;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.findMethodBestMatch;
+import static com.xposed.miuianesthetist.XposedHelpersWraper.findMethodExact;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.getObjectField;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.getStaticBooleanField;
 import static com.xposed.miuianesthetist.XposedHelpersWraper.getStaticObjectField;
@@ -196,6 +201,7 @@ public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
             iib = getStaticBooleanField(findClass("miui.os.Build", classLoader),
                     "IS_INTERNATIONAL_BUILD");
         }
+
         //Disable integrity check when boot in services.jar
         Class sms = findClass("com.miui.server.SecurityManagerService"
                 , classLoader);
@@ -213,15 +219,18 @@ public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
                         setIntField(param.thisObject, "mSysAppCracked", 0);
                     }
                 });
+
         //Remove the limit for disabling system apps in services.jar
         findAndHookMethod("com.android.server.pm.PackageManagerServiceInjector"
                 , classLoader, "isAllowedDisable",
                 String.class, int.class, XC_MethodReplacement.returnConstant(true));
+
         //Remove the limit for installing WebViewGoogle manually on MIUI China ROM in services.jar
         findAndHookMethod("com.android.server.pm.PackageManagerServiceInjector",
                 classLoader, "isAllowedInstall",
                 Context.class, File.class, int.class, String.class,
                 XC_MethodReplacement.returnConstant(true));
+
         //Prevent some ultra sticky system apps (MiuiDaemon, FindDevice, etc.) from running
         //after have been disabled in services.jar
         findAndHookMethod("com.android.server.am.ActivityManagerServiceInjector",
@@ -348,10 +357,103 @@ public class DisableSecurityCheck extends BaseXposedHookLoadPackage {
                         }
                     }
                 });
+
+        //Remove waiting time for applying device admin app
+        findAndHookMethod("com.miui.permcenter.install.DeviceManagerApplyActivity", classLoader, "onCreate", Bundle.class, new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param)  {
+                bypassSuperNotCalledException(param);
+            }
+        });
+
+        //Remove waiting time for applying adb input
+        findAndHookMethod("com.miui.permcenter.install.AdbInputApplyActivity", classLoader, "onCreate", Bundle.class, new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param)  {
+                try {
+                    setProp(classLoader,"persist.security.adbinput","1");
+                    bypassSuperNotCalledException(param);
+                } catch (Exception e) {
+                    log(e);
+                }
+            }
+        });
+
+        //Remove waiting time for applying install verify
+        findAndHookMethod("com.miui.permcenter.install.AdbInstallVerifyActivity", classLoader, "onCreate", Bundle.class, new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                callPreference(param, "security_adb_install_enable", true);
+                setProp(classLoader,"persist.security.adbinstall","1");
+                bypassSuperNotCalledException(param);
+            }
+        });
+
+        //Remove waiting time for applying root access
+        findAndHookMethod("com.miui.permcenter.root.RootApplyActivity", classLoader, "onCreate", Bundle.class, new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param)  {
+                try {
+                    grantRootAccess(param);
+                } catch (Exception e) {
+                    log(e);
+                }
+            }
+        });
+    }
+
+    private void grantRootAccess(XC_MethodHook.MethodHookParam param) {
+        Activity activity = (Activity) param.thisObject;
+        String mPkgName = activity.getIntent().getStringExtra("extra_pkgname");
+        if (TextUtils.isEmpty(mPkgName)) {
+            bypassSuperNotCalledException(param);
+            return;
+        }
+        String mAppName = getAppName(param,mPkgName);
+        Bundle bundle = new Bundle();
+        bundle.putLong("extra_permission", 512);
+        bundle.putInt("extra_action", 3);
+        bundle.putStringArray("extra_package", new String[]{mPkgName});
+        bundle.putInt("extra_flags", 0);
+        Uri content_uri = Uri.parse("content://com.lbe.security.miui.permmgr");
+        activity.getApplicationContext().getContentResolver().call(content_uri, "6", null, bundle);
+        Resources resources = activity.getResources();
+        int toast_root_apply_accept = resources.getIdentifier("toast_root_apply_accept", "string", "com.miui.securitycenter");
+        Toast.makeText(activity, resources.getString(toast_root_apply_accept, mAppName), Toast.LENGTH_SHORT).show();
+        bypassSuperNotCalledException(param);
+    }
+
+    private String getAppName(XC_MethodHook.MethodHookParam param,String packageName) {
+        Activity activity = (Activity) param.thisObject;
+        if ("root".equals(packageName)) {
+            return "root";
+        }
+        if ("com.android.shell".equals(packageName)) {
+            return "Interactive Shell";
+        }
+        try {
+            PackageManager packageManager = activity.getApplicationContext().getPackageManager();
+            return packageManager.getApplicationInfo(packageName,0).loadLabel(packageManager).toString();
+        } catch (PackageManager.NameNotFoundException e) {
+            return packageName;
+        }
+    }
+
+    private void setProp(ClassLoader classLoader,String key,String value) throws IllegalAccessException, InvocationTargetException {
+        Method setProp = findMethodExact("android.os.SystemProperties", classLoader, "set", String.class, String.class);
+        setProp.invoke(null,key,value);
     }
 
     private synchronized void initRes(XC_MethodHook.MethodHookParam param) {
         res = (res == null) ? ((Activity) param.thisObject).getResources() : res;
     }
 
+    private void bypassSuperNotCalledException(XC_MethodHook.MethodHookParam param) {
+        Activity activity = (Activity) param.thisObject;
+        findField(Activity.class,"mCalled").setAccessible(true);
+        setBooleanField(activity,"mCalled",true);
+        activity.setResult(Activity.RESULT_OK);
+        activity.finish();
+        param.setResult(null);
+    }
 }
